@@ -1,11 +1,14 @@
 import { Button, Input, List, Space } from "antd";
 import { useState } from "react";
+import { useQuery, useMutation } from "@apollo/client";
 import { GoalItem } from "./GoalItem";
 import { GoalProgress } from "./GoalProgress";
+import { GET_GOAL_LIST, CREATE_GOAL, TOGGLE_GOAL, DELETE_GOAL, COPY_GOALS_FROM_PREVIOUS_DAY } from "../graphql/goals";
 import type { Dayjs } from "dayjs";
 
 export interface GoalInterface {
-  goalName: String;
+  id: string;
+  goalName: string;
   goalDate: Date;
   goalCompleted?: boolean;
 }
@@ -15,56 +18,57 @@ interface GoalListProps {
 }
 
 export const GoalList: React.FC<GoalListProps> = ({ selectedDate }) => {
-  const [goalsByDate, setGoalsByDate] = useState<
-    Record<string, GoalInterface[]>
-  >({});
   const [currentValue, setCurrentValue] = useState("");
-
   const dateKey = selectedDate.format("YYYY-MM-DD");
   const previousDateKey = selectedDate.subtract(1, "day").format("YYYY-MM-DD");
-  const goals = goalsByDate[dateKey] ?? [];
-  const previousDayGoals = goalsByDate[previousDateKey] ?? [];
+
+  const { data, loading } = useQuery(GET_GOAL_LIST, {
+    variables: { date: dateKey },
+  });
+
+  const { data: previousData } = useQuery(GET_GOAL_LIST, {
+    variables: { date: previousDateKey },
+  });
+
+  const [createGoal] = useMutation(CREATE_GOAL, {
+    refetchQueries: [{ query: GET_GOAL_LIST, variables: { date: dateKey } }],
+  });
+
+  const [toggleGoal] = useMutation(TOGGLE_GOAL, {
+    refetchQueries: [{ query: GET_GOAL_LIST, variables: { date: dateKey } }],
+  });
+
+  const [deleteGoalMutation] = useMutation(DELETE_GOAL, {
+    refetchQueries: [{ query: GET_GOAL_LIST, variables: { date: dateKey } }],
+  });
+
+  const [copyGoals] = useMutation(COPY_GOALS_FROM_PREVIOUS_DAY, {
+    refetchQueries: [{ query: GET_GOAL_LIST, variables: { date: dateKey } }],
+  });
+
+  const goals: GoalInterface[] = data?.goalList?.goals ?? [];
+  const previousDayGoals: GoalInterface[] = previousData?.goalList?.goals ?? [];
 
   const copyFromPreviousDay = () => {
     if (previousDayGoals.length === 0) return;
-    setGoalsByDate((prev) => ({
-      ...prev,
-      [dateKey]: [
-        ...(prev[dateKey] ?? []),
-        ...previousDayGoals.map((goal) => ({
-          ...goal,
-          goalDate: selectedDate.toDate(),
-          goalCompleted: false,
-        })),
-      ],
-    }));
+    copyGoals({ variables: { date: dateKey } });
   };
 
   const updateGoals = (targetGoal: GoalInterface) => {
-    setGoalsByDate((prev) => ({
-      ...prev,
-      [dateKey]: (prev[dateKey] ?? []).map((goal) =>
-        goal.goalName === targetGoal.goalName
-          ? { ...goal, goalCompleted: !goal.goalCompleted }
-          : goal,
-      ),
-    }));
+    toggleGoal({ variables: { id: targetGoal.id } });
   };
 
-  const addNewGoal = () => {
+  const handleDeleteGoal = (targetGoal: GoalInterface) => {
+    deleteGoalMutation({ variables: { id: targetGoal.id } });
+  };
+
+  const addNewGoal = async () => {
     if (currentValue.trim() === "") {
       return;
     }
-    setGoalsByDate((prev) => ({
-      ...prev,
-      [dateKey]: [
-        ...(prev[dateKey] ?? []),
-        {
-          goalName: currentValue,
-          goalDate: selectedDate.toDate(),
-        },
-      ],
-    }));
+    await createGoal({
+      variables: { goalName: currentValue, date: dateKey },
+    });
     setCurrentValue("");
   };
 
@@ -76,6 +80,8 @@ export const GoalList: React.FC<GoalListProps> = ({ selectedDate }) => {
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setCurrentValue(e.target.value)
           }
+          onPressEnter={addNewGoal}
+          disabled={loading}
           placeholder="Enter your new goal..."
         />
         <Button type="primary" onClick={addNewGoal}>
@@ -92,10 +98,11 @@ export const GoalList: React.FC<GoalListProps> = ({ selectedDate }) => {
       <List
         header={<div>Goals for {selectedDate.format("MMMM D, YYYY")}</div>}
         bordered
+        loading={loading}
         dataSource={goals}
         renderItem={(item: GoalInterface) => (
           <List.Item>
-            <GoalItem goal={item} updateGoals={updateGoals} />
+            <GoalItem goal={item} updateGoals={updateGoals} deleteGoal={handleDeleteGoal} />
           </List.Item>
         )}
       />

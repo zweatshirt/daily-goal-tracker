@@ -7,7 +7,7 @@ class GraphqlController < ApplicationController
       current_user: current_user
     }
 
-    result = WorkoutTrackerSchema.execute(
+    result = DailyTrackerSchema.execute(
       query,
       variables: variables,
       context: context,
