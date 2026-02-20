@@ -31,19 +31,19 @@ export const Dashboard: React.FC = () => {
   return (
     <Flex vertical gap="middle" style={{ width: "100%" }}>
       <Typography.Title level={2}>
-        {dayjs().format("dddd, MMMM D, YYYY")}
+        {selectedDate.format("MMMM D, YYYY")} Goals
       </Typography.Title>
       <Flex gap="middle">
-      <Calendar
-        fullscreen={false}
-        classNames={classNames}
-        styles={calendarStyles}
-        value={selectedDate}
-        onSelect={onDateSelect}
-      />
-      <div style={{ flex: 1 }}>
-        <GoalList selectedDate={selectedDate} />
-      </div>
+        <Calendar
+          fullscreen={false}
+          classNames={classNames}
+          styles={calendarStyles}
+          value={selectedDate}
+          onSelect={onDateSelect}
+        />
+        <div style={{ flex: 1 }}>
+          <GoalList selectedDate={selectedDate} />
+        </div>
       </Flex>
     </Flex>
   );

@@ -3,7 +3,13 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@apollo/client";
 import { GoalItem } from "./GoalItem";
 import { GoalProgress } from "./GoalProgress";
-import { GET_GOAL_LIST, CREATE_GOAL, TOGGLE_GOAL, DELETE_GOAL, COPY_GOALS_FROM_PREVIOUS_DAY } from "../graphql/goals";
+import {
+  GET_GOAL_LIST,
+  CREATE_GOAL,
+  TOGGLE_GOAL,
+  DELETE_GOAL,
+  COPY_GOALS_FROM_PREVIOUS_DAY,
+} from "../graphql/goals";
 import type { Dayjs } from "dayjs";
 
 export interface GoalInterface {
@@ -74,7 +80,7 @@ export const GoalList: React.FC<GoalListProps> = ({ selectedDate }) => {
 
   return (
     <>
-      <Space.Compact style={{ width: "100%" }}>
+      <Space.Compact style={{ width: "100%", marginBottom: 8 }}>
         <Input
           value={currentValue}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -88,13 +94,6 @@ export const GoalList: React.FC<GoalListProps> = ({ selectedDate }) => {
           Add Goal
         </Button>
       </Space.Compact>
-      <Button
-        onClick={copyFromPreviousDay}
-        disabled={previousDayGoals.length === 0}
-        style={{ marginTop: 8 }}
-      >
-        Copy goals from previous day
-      </Button>
       <List
         header={<div>Goals for {selectedDate.format("MMMM D, YYYY")}</div>}
         bordered
@@ -102,11 +101,22 @@ export const GoalList: React.FC<GoalListProps> = ({ selectedDate }) => {
         dataSource={goals}
         renderItem={(item: GoalInterface) => (
           <List.Item>
-            <GoalItem goal={item} updateGoals={updateGoals} deleteGoal={handleDeleteGoal} />
+            <GoalItem
+              goal={item}
+              updateGoals={updateGoals}
+              deleteGoal={handleDeleteGoal}
+            />
           </List.Item>
         )}
       />
       <GoalProgress goals={goals} />
+      <Button
+        onClick={copyFromPreviousDay}
+        disabled={previousDayGoals.length === 0}
+        style={{ marginTop: 8 }}
+      >
+        Copy goals from previous day
+      </Button>
     </>
   );
 };

@@ -8,7 +8,7 @@ const stylesFn: SwitchProps["styles"] = (info) => {
   if (info.props.size === "default") {
     return {
       root: {
-        backgroundColor: "#BDE3C3",
+        backgroundColor: info.props.checked ? "#5cb85c" : "#BDE3C3",
       },
     } satisfies SwitchProps["styles"];
   }
