@@ -27,14 +27,14 @@ export function useGoals(
     setLoading(true);
 
     async function load() {
-      const stored = await getStorageData<Goal[]>(storageKey(dateKey));
-      const prevStored = await getStorageData<Goal[]>(
+      const storedGoals = await getStorageData<Goal[]>(storageKey(dateKey));
+      const previousDayGoals = await getStorageData<Goal[]>(
         storageKey(previousDateKey),
       );
 
       if (!cancelled) {
-        setGoals(stored ?? []);
-        setPreviousDayHasGoals((prevStored ?? []).length > 0);
+        setGoals(storedGoals ?? []);
+        setPreviousDayHasGoals((previousDayGoals ?? []).length > 0);
         setLoading(false);
       }
     }
@@ -68,7 +68,7 @@ export function useGoals(
 
   const deleteGoal = useCallback(
     async (goalId: string) => {
-      await persist(goals.filter((g) => g.id !== goalId));
+      await persist(goals.filter((goal) => goal.id !== goalId));
     },
     [goals, persist],
   );
@@ -76,8 +76,8 @@ export function useGoals(
   const toggleGoal = useCallback(
     async (goalId: string) => {
       await persist(
-        goals.map((g) =>
-          g.id === goalId ? { ...g, goalCompleted: !g.goalCompleted } : g,
+        goals.map((goal) =>
+          goal.id === goalId ? { ...goal, goalCompleted: !goal.goalCompleted } : goal,
         ),
       );
     },
@@ -92,10 +92,10 @@ export function useGoals(
         createdAt: new Date().toISOString(),
       };
       await persist(
-        goals.map((g) =>
-          g.id === goalId
-            ? { ...g, goalNotes: [...g.goalNotes, newNote] }
-            : g,
+        goals.map((goal) =>
+          goal.id === goalId
+            ? { ...goal, goalNotes: [...goal.goalNotes, newNote] }
+            : goal,
         ),
       );
     },
@@ -105,10 +105,10 @@ export function useGoals(
   const deleteNote = useCallback(
     async (goalId: string, noteId: string) => {
       await persist(
-        goals.map((g) =>
-          g.id === goalId
-            ? { ...g, goalNotes: g.goalNotes.filter((n) => n.id !== noteId) }
-            : g,
+        goals.map((goal) =>
+          goal.id === goalId
+            ? { ...goal, goalNotes: goal.goalNotes.filter((note) => note.id !== noteId) }
+            : goal,
         ),
       );
     },
@@ -116,14 +116,14 @@ export function useGoals(
   );
 
   const copyFromPreviousDay = useCallback(async () => {
-    const prevGoals = await getStorageData<Goal[]>(
+    const previousGoals = await getStorageData<Goal[]>(
       storageKey(previousDateKey),
     );
-    if (!prevGoals || prevGoals.length === 0) return;
+    if (!previousGoals || previousGoals.length === 0) return;
 
-    const copiedGoals: Goal[] = prevGoals.map((g) => ({
+    const copiedGoals: Goal[] = previousGoals.map((goal) => ({
       id: crypto.randomUUID(),
-      goalName: g.goalName,
+      goalName: goal.goalName,
       goalCompleted: false,
       goalNotes: [],
     }));
