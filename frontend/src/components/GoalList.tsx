@@ -1,23 +1,10 @@
 import { Button, Input, List, Space } from "antd";
 import { useState } from "react";
-import { useQuery, useMutation } from "@apollo/client";
 import { GoalItem } from "./GoalItem";
 import { GoalProgress } from "./GoalProgress";
-import {
-  GET_GOAL_LIST,
-  CREATE_GOAL,
-  TOGGLE_GOAL,
-  DELETE_GOAL,
-  COPY_GOALS_FROM_PREVIOUS_DAY,
-} from "../graphql/goals";
+import { useGoals } from "../hooks/useGoals";
+import type { Goal } from "../types/goal";
 import type { Dayjs } from "dayjs";
-
-export interface GoalInterface {
-  id: string;
-  goalName: string;
-  goalDate: Date;
-  goalCompleted?: boolean;
-}
 
 interface GoalListProps {
   selectedDate: Dayjs;
@@ -28,53 +15,21 @@ export const GoalList: React.FC<GoalListProps> = ({ selectedDate }) => {
   const dateKey = selectedDate.format("YYYY-MM-DD");
   const previousDateKey = selectedDate.subtract(1, "day").format("YYYY-MM-DD");
 
-  const { data, loading } = useQuery(GET_GOAL_LIST, {
-    variables: { date: dateKey },
-  });
-
-  const { data: previousData } = useQuery(GET_GOAL_LIST, {
-    variables: { date: previousDateKey },
-  });
-
-  const [createGoal] = useMutation(CREATE_GOAL, {
-    refetchQueries: [{ query: GET_GOAL_LIST, variables: { date: dateKey } }],
-  });
-
-  const [toggleGoal] = useMutation(TOGGLE_GOAL, {
-    refetchQueries: [{ query: GET_GOAL_LIST, variables: { date: dateKey } }],
-  });
-
-  const [deleteGoalMutation] = useMutation(DELETE_GOAL, {
-    refetchQueries: [{ query: GET_GOAL_LIST, variables: { date: dateKey } }],
-  });
-
-  const [copyGoals] = useMutation(COPY_GOALS_FROM_PREVIOUS_DAY, {
-    refetchQueries: [{ query: GET_GOAL_LIST, variables: { date: dateKey } }],
-  });
-
-  const goals: GoalInterface[] = data?.goalList?.goals ?? [];
-  const previousDayGoals: GoalInterface[] = previousData?.goalList?.goals ?? [];
-
-  const copyFromPreviousDay = () => {
-    if (previousDayGoals.length === 0) return;
-    copyGoals({ variables: { date: dateKey } });
-  };
-
-  const updateGoals = (targetGoal: GoalInterface) => {
-    toggleGoal({ variables: { id: targetGoal.id } });
-  };
-
-  const handleDeleteGoal = (targetGoal: GoalInterface) => {
-    deleteGoalMutation({ variables: { id: targetGoal.id } });
-  };
+  const {
+    goals,
+    loading,
+    addGoal,
+    deleteGoal,
+    toggleGoal,
+    addNote,
+    deleteNote,
+    copyFromPreviousDay,
+    previousDayHasGoals,
+  } = useGoals(dateKey, previousDateKey);
 
   const addNewGoal = async () => {
-    if (currentValue.trim() === "") {
-      return;
-    }
-    await createGoal({
-      variables: { goalName: currentValue, date: dateKey },
-    });
+    if (currentValue.trim() === "") return;
+    await addGoal(currentValue);
     setCurrentValue("");
   };
 
@@ -90,7 +45,11 @@ export const GoalList: React.FC<GoalListProps> = ({ selectedDate }) => {
           disabled={loading}
           placeholder="Enter your new goal..."
         />
-        <Button type="primary" onClick={addNewGoal}>
+        <Button
+          disabled={loading || !currentValue}
+          type="primary"
+          onClick={addNewGoal}
+        >
           Add Goal
         </Button>
       </Space.Compact>
@@ -99,12 +58,14 @@ export const GoalList: React.FC<GoalListProps> = ({ selectedDate }) => {
         bordered
         loading={loading}
         dataSource={goals}
-        renderItem={(item: GoalInterface) => (
+        renderItem={(item: Goal) => (
           <List.Item>
             <GoalItem
               goal={item}
-              updateGoals={updateGoals}
-              deleteGoal={handleDeleteGoal}
+              onToggle={() => toggleGoal(item.id)}
+              onDelete={() => deleteGoal(item.id)}
+              onAddNote={(content: string) => addNote(item.id, content)}
+              onDeleteNote={(noteId: string) => deleteNote(item.id, noteId)}
             />
           </List.Item>
         )}
@@ -112,7 +73,7 @@ export const GoalList: React.FC<GoalListProps> = ({ selectedDate }) => {
       <GoalProgress goals={goals} />
       <Button
         onClick={copyFromPreviousDay}
-        disabled={previousDayGoals.length === 0}
+        disabled={!previousDayHasGoals}
         style={{ marginTop: 8 }}
       >
         Copy goals from previous day

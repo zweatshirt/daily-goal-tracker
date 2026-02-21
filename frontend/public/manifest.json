@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Daily Tracker",
+  "version": "1.0.0",
+  "description": "A daily goal tracker that replaces your new tab page",
+  "permissions": ["storage"],
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  }
+}

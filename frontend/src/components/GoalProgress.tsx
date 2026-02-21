@@ -1,9 +1,7 @@
 import { Progress } from "antd";
-import { GoalInterface } from "./GoalList";
+import type { Goal } from "../types/goal";
 
-export const GoalProgress: React.FC<{ goals: GoalInterface[] }> = ({
-  goals,
-}) => {
+export const GoalProgress: React.FC<{ goals: Goal[] }> = ({ goals }) => {
   const completedGoals = goals.filter((goal) => goal.goalCompleted === true);
   const percent =
     goals.length === 0

@@ -16,7 +16,7 @@ const useStyles = createStyles(({ token }) => ({
 const calendarStyles: CalendarProps<Dayjs>["styles"] = {
   root: {
     borderRadius: 8,
-    width: 600,
+    width: "100%",
   },
 };
 
@@ -33,7 +33,7 @@ export const Dashboard: React.FC = () => {
       <Typography.Title level={2}>
         {selectedDate.format("MMMM D, YYYY")} Goals
       </Typography.Title>
-      <Flex gap="middle">
+      <Flex vertical gap="middle">
         <Calendar
           fullscreen={false}
           classNames={classNames}
@@ -41,9 +41,7 @@ export const Dashboard: React.FC = () => {
           value={selectedDate}
           onSelect={onDateSelect}
         />
-        <div style={{ flex: 1 }}>
-          <GoalList selectedDate={selectedDate} />
-        </div>
+        <GoalList selectedDate={selectedDate} />
       </Flex>
     </Flex>
   );
