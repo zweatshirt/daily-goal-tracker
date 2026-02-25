@@ -76,7 +76,7 @@ export const GoalList: React.FC<GoalListProps> = ({ selectedDate }) => {
         disabled={!previousDayHasGoals}
         style={{ marginTop: 8 }}
       >
-        Copy goals from previous day
+        Copy unfinished goals from yesterday
       </Button>
     </>
   );
