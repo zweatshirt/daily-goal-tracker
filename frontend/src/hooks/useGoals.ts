@@ -77,7 +77,9 @@ export function useGoals(
     async (goalId: string) => {
       await persist(
         goals.map((goal) =>
-          goal.id === goalId ? { ...goal, goalCompleted: !goal.goalCompleted } : goal,
+          goal.id === goalId
+            ? { ...goal, goalCompleted: !goal.goalCompleted }
+            : goal,
         ),
       );
     },
@@ -107,7 +109,10 @@ export function useGoals(
       await persist(
         goals.map((goal) =>
           goal.id === goalId
-            ? { ...goal, goalNotes: goal.goalNotes.filter((note) => note.id !== noteId) }
+            ? {
+                ...goal,
+                goalNotes: goal.goalNotes.filter((note) => note.id !== noteId),
+              }
             : goal,
         ),
       );
@@ -121,7 +126,10 @@ export function useGoals(
     );
     if (!previousGoals || previousGoals.length === 0) return;
 
-    const copiedGoals: Goal[] = previousGoals.map((goal) => ({
+    const unfinishedPreviousGoals = previousGoals.filter(
+      (goal) => goal.goalCompleted === false,
+    );
+    const copiedGoals: Goal[] = unfinishedPreviousGoals.map((goal) => ({
       id: crypto.randomUUID(),
       goalName: goal.goalName,
       goalCompleted: false,
